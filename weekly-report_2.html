@@ -1,0 +1,927 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Weekly Status Report</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --mint:     #C9F299;
+  --mint-lt:  #e8fad0;
+  --mint-md:  #a8e060;
+  --mint-dk:  #3a7a10;
+  --white:    #ffffff;
+  --bg:       #f8fdf2;
+  --border:   #e8f0e0;
+  --text:     #1a2010;
+  --text2:    #4a5e38;
+  --text3:    #8aaa70;
+  --done-c:   #16a34a;
+  --doing-c:  #d97706;
+  --todo-c:   #94a3b8;
+  --red-c:    #dc2626;
+  --r:        14px;
+  --r-sm:     10px;
+  --f:        'Inter', sans-serif;
+  --sh:       0 1px 8px rgba(40,100,10,0.07), 0 1px 3px rgba(0,0,0,0.04);
+  --sh-md:    0 4px 20px rgba(40,100,10,0.1);
+
+  /* category colors */
+  --c-work:   #3b82f6;
+  --c-learn:  #8b5cf6;
+  --c-body:   #ef4444;
+  --c-grow:   #10b981;
+  --c-life:   #f59e0b;
+}
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+body { background:var(--bg); color:var(--text); font-family:var(--f); font-size:14px; min-height:100vh; }
+
+/* ── NAV ── */
+.nav {
+  position:sticky; top:0; z-index:99;
+  background:rgba(255,255,255,0.95);
+  backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
+  border-bottom:2px solid var(--mint);
+  display:flex; align-items:center; justify-content:space-between; padding:0 28px;
+}
+.nav-logo { font-size:14px; font-weight:700; color:var(--mint-dk); padding:15px 0; display:flex; align-items:center; gap:9px; }
+.nav-badge { background:var(--mint); border-radius:8px; width:26px; height:26px; display:flex; align-items:center; justify-content:center; font-size:13px; }
+.nav-tabs { display:flex; }
+.nav-tab { padding:15px 18px; font-size:13px; font-weight:500; color:var(--text2); cursor:pointer; border:none; background:none; font-family:var(--f); border-bottom:2px solid transparent; transition:all .15s; margin-bottom:-2px; }
+.nav-tab:hover { color:var(--text); }
+.nav-tab.active { color:var(--mint-dk); border-bottom-color:var(--mint-dk); font-weight:600; }
+
+/* ── PAGES ── */
+.page { display:none; padding:24px 28px 110px; max-width:900px; margin:0 auto; }
+.page.active { display:block; }
+
+/* ── GLASS CARD ── */
+.card { background:var(--white); border:1px solid var(--border); border-radius:var(--r); box-shadow:var(--sh); margin-bottom:14px; overflow:hidden; }
+.card-hd { padding:14px 22px; font-size:11px; font-weight:700; letter-spacing:.6px; text-transform:uppercase; color:var(--text2); border-bottom:1px solid var(--border); background:var(--bg); }
+.card-bd { padding:16px 22px; }
+
+/* ── TODAY STRIP ── */
+.today-strip {
+  background:var(--white); border:1px solid var(--border); border-radius:var(--r);
+  border-left:4px solid var(--mint); padding:18px 24px; margin-bottom:16px; box-shadow:var(--sh);
+  display:flex; align-items:center; justify-content:space-between; gap:20px; flex-wrap:wrap;
+}
+.today-left { display:flex; flex-direction:column; gap:3px; }
+.today-tag { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:var(--mint-dk); }
+.today-date { font-size:16px; font-weight:700; color:var(--text); }
+.today-stats { display:flex; gap:20px; }
+.ts { text-align:center; }
+.ts-n { font-size:26px; font-weight:700; line-height:1; }
+.ts-l { font-size:10px; font-weight:600; color:var(--text3); margin-top:2px; text-transform:uppercase; }
+.c-done { color:var(--done-c); } .c-doing { color:var(--doing-c); } .c-todo { color:var(--text3); } .c-total { color:var(--text); }
+.wprog { flex:1; min-width:140px; max-width:180px; }
+.wprog-lbl { display:flex; justify-content:space-between; font-size:11px; color:var(--text2); margin-bottom:5px; }
+.wprog-lbl b { color:var(--mint-dk); font-weight:700; }
+.wprog-bg { background:var(--border); border-radius:99px; height:8px; overflow:hidden; }
+.wprog-fill { background:var(--mint-dk); height:100%; border-radius:99px; transition:width .5s ease; }
+
+/* ── FORM ── */
+.qrow { display:grid; grid-template-columns:110px 1fr 130px 120px; gap:8px; margin-bottom:10px; }
+.arow { display:flex; gap:8px; align-items:center; }
+select, input, textarea {
+  background:var(--bg); border:1.5px solid var(--border); border-radius:var(--r-sm);
+  color:var(--text); font-family:var(--f); font-size:13px;
+  padding:8px 12px; outline:none; transition:all .18s; width:100%;
+}
+select:focus, input:focus, textarea:focus { border-color:var(--mint-dk); box-shadow:0 0 0 3px rgba(58,122,16,.1); background:var(--white); }
+select { cursor:pointer; }
+textarea { resize:vertical; min-height:72px; line-height:1.6; }
+
+/* AI tag badge */
+.ai-tag-wrap { display:flex; align-items:center; gap:6px; margin-top:8px; min-height:22px; }
+.ai-tag-hint { font-size:11px; color:var(--text3); }
+.ai-tag-preview { display:inline-flex; align-items:center; gap:4px; padding:2px 10px; border-radius:99px; font-size:11px; font-weight:600; }
+
+/* ── BUTTONS ── */
+.btn { background:var(--mint-dk); color:#fff; border:none; border-radius:var(--r-sm); padding:9px 18px; font-family:var(--f); font-size:13px; font-weight:600; cursor:pointer; transition:all .15s; display:inline-flex; align-items:center; gap:6px; white-space:nowrap; box-shadow:0 2px 8px rgba(58,122,16,.2); }
+.btn:hover { background:#2d6008; transform:translateY(-1px); }
+.btn:active { transform:translateY(0); }
+.btn-sm { padding:5px 12px; font-size:12px; }
+.btn-ghost { background:var(--white); color:var(--text2); border:1.5px solid var(--border); box-shadow:none; }
+.btn-ghost:hover { border-color:var(--mint-dk); color:var(--mint-dk); background:var(--mint-lt); transform:translateY(-1px); }
+.btn-red { background:#dc2626; box-shadow:0 2px 8px rgba(220,38,38,.15); }
+.btn-red:hover { background:#b91c1c; }
+.btn-mint { background:var(--mint); color:var(--mint-dk); border:none; border-radius:var(--r-sm); padding:9px 18px; font-family:var(--f); font-size:13px; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:6px; margin-top:8px; transition:all .15s; box-shadow:0 2px 8px rgba(201,242,153,.4); }
+.btn-mint:hover { background:var(--mint-md); transform:translateY(-1px); }
+
+/* ── CATEGORY PILLS ── */
+.cat-pill { display:inline-flex; align-items:center; gap:4px; padding:3px 10px; border-radius:99px; font-size:11px; font-weight:600; white-space:nowrap; }
+.cat-work  { background:rgba(59,130,246,.1);  color:#2563eb; }
+.cat-learn { background:rgba(139,92,246,.1);  color:#7c3aed; }
+.cat-body  { background:rgba(239,68,68,.1);   color:#dc2626; }
+.cat-grow  { background:rgba(16,185,129,.1);  color:#059669; }
+.cat-life  { background:rgba(245,158,11,.1);  color:#d97706; }
+
+/* ── TABLE ── */
+.tbl-wrap { border:1px solid var(--border); border-radius:var(--r); overflow-x:auto; background:var(--white); box-shadow:var(--sh); }
+table { width:100%; border-collapse:collapse; font-size:13px; min-width:800px; }
+thead th { background:var(--bg); color:var(--text2); font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.5px; padding:10px 14px; text-align:left; border-bottom:1px solid var(--border); }
+thead th:nth-child(2) { min-width:200px; }
+thead th:nth-child(6) { min-width:120px; }
+thead th:nth-child(7) { min-width:100px; }
+tbody tr { border-bottom:1px solid var(--border); transition:background .12s; }
+tbody tr:last-child { border-bottom:none; }
+tbody tr:hover { background:var(--mint-lt); }
+td { padding:11px 14px; vertical-align:middle; }
+td:first-child { color:var(--text3); font-size:12px; white-space:nowrap; width:70px; font-weight:500; }
+td:nth-child(2) { min-width:200px; }
+td:nth-child(6) { min-width:120px; }
+td:nth-child(7) { min-width:100px; }
+.tcell { color:var(--text); line-height:1.5; }
+.tempty { color:var(--text3); font-style:italic; font-size:12px; }
+.task-edit {
+  background:transparent; border:none; outline:none; font-family:var(--f);
+  font-size:13px; color:var(--text); width:100%; line-height:1.5;
+  padding:2px 6px; border-radius:6px; transition:background .15s;
+  cursor:text; resize:none; overflow:hidden; min-height:24px;
+  display:block; white-space:pre-wrap; word-break:break-word;
+  field-sizing:content;
+}
+.task-edit:hover { background:rgba(201,242,153,.3); }
+.task-edit:focus { background:var(--white); outline:1.5px solid var(--mint-dk); }
+.badge { display:inline-flex; align-items:center; padding:3px 10px; border-radius:99px; font-size:11px; font-weight:600; cursor:pointer; transition:all .15s; user-select:none; white-space:nowrap; }
+.badge:hover { transform:scale(1.06); }
+.b-done  { background:#dcfce7; color:var(--done-c); }
+.b-doing { background:#fef3c7; color:var(--doing-c); }
+.b-todo  { background:#f1f5f9; color:var(--text3); border:1px solid var(--border); }
+.prog { display:flex; align-items:center; gap:6px; }
+.prog-bar { background:var(--border); border-radius:99px; height:5px; flex:1; overflow:hidden; min-width:40px; }
+.prog-fill { height:100%; background:var(--mint-dk); border-radius:99px; transition:width .3s; }
+.prog { display:flex; align-items:center; gap:6px; }
+.prog-bar { background:var(--border); border-radius:99px; height:5px; flex:1; overflow:hidden; min-width:40px; }
+.prog-fill { height:100%; background:var(--mint-dk); border-radius:99px; transition:width .3s; }
+.prog-input { width:54px !important; padding:4px 6px !important; font-size:12px !important; text-align:center; border-radius:6px !important; min-width:54px !important; }
+.notes-input { background:transparent; border:none; outline:none; font-family:var(--f); font-size:12px; color:var(--text2); width:100%; padding:2px 6px; border-radius:6px; transition:background .15s; cursor:text; }
+.notes-input:hover { background:rgba(201,242,153,.25); }
+.notes-input:focus { background:var(--white); outline:1.5px solid var(--mint-dk); }
+.link-input { background:transparent; border:none; outline:none; font-family:var(--f); font-size:12px; color:#2563eb; width:100%; padding:2px 6px; border-radius:6px; transition:background .15s; cursor:text; }
+.link-input:hover { background:rgba(201,242,153,.25); }
+.link-input:focus { background:var(--white); outline:1.5px solid var(--mint-dk); color:var(--text); }
+.link-open { font-size:13px; text-decoration:none; color:#2563eb; margin-left:2px; opacity:0; transition:opacity .15s; }
+tbody tr:hover .link-open { opacity:1; }
+.btn-del { background:none; border:none; color:var(--text3); cursor:pointer; font-size:13px; padding:3px 6px; border-radius:6px; opacity:0; transition:opacity .12s; }
+tbody tr:hover .btn-del { opacity:1; }
+.btn-del:hover { color:var(--red-c); background:rgba(220,38,38,.06); }
+
+/* ── SECTION LABEL ── */
+.slabel { font-size:11px; font-weight:700; letter-spacing:.6px; text-transform:uppercase; color:var(--text2); margin-bottom:10px; margin-top:26px; }
+.divider { height:1px; background:var(--border); margin:22px 0; }
+
+/* ── CATEGORY FILTER BAR ── */
+.cat-filter { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px; }
+.cat-btn { padding:6px 14px; border-radius:99px; font-size:12px; font-weight:600; cursor:pointer; border:1.5px solid var(--border); background:var(--white); color:var(--text2); transition:all .15s; }
+.cat-btn:hover { border-color:var(--mint-dk); color:var(--mint-dk); }
+.cat-btn.active { background:var(--mint); border-color:var(--mint-dk); color:var(--mint-dk); }
+
+/* ── TODO ── */
+.todo-list { display:flex; flex-direction:column; gap:6px; }
+.todo-item { display:flex; gap:10px; align-items:flex-start; background:var(--white); border:1.5px solid var(--border); border-radius:var(--r-sm); padding:10px 14px; font-size:13px; transition:all .12s; }
+.todo-item:hover { border-color:var(--mint); background:var(--mint-lt); }
+.todo-chk { width:17px; height:17px; border:1.5px solid var(--border); border-radius:5px; cursor:pointer; flex-shrink:0; margin-top:1px; display:flex; align-items:center; justify-content:center; transition:all .15s; font-size:10px; color:#fff; }
+.todo-chk.on { background:var(--mint-dk); border-color:var(--mint-dk); }
+.todo-txt { flex:1; line-height:1.5; }
+.todo-txt.done { text-decoration:line-through; color:var(--text3); }
+.todo-add { display:flex; gap:8px; margin-top:8px; }
+.todo-add input { flex:1; }
+
+/* ── STAT CARDS ── */
+.stat-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:16px; }
+.stat-card { background:var(--white); border:1px solid var(--border); border-radius:var(--r); padding:20px 22px 18px; box-shadow:var(--sh); display:flex; flex-direction:column; gap:7px; }
+.stat-card.highlight { border-left:4px solid var(--mint); }
+.sc-lbl { font-size:13px; font-weight:500; }
+.sc-n { font-size:38px; font-weight:700; line-height:1; letter-spacing:-1.5px; }
+.sc-total .sc-lbl { color:var(--text2); } .sc-total .sc-n { color:var(--text); }
+.sc-done  .sc-lbl { color:var(--done-c); } .sc-done  .sc-n { color:var(--done-c); }
+.sc-doing .sc-lbl { color:var(--doing-c); } .sc-doing .sc-n { color:var(--doing-c); }
+.sc-avg   .sc-lbl { color:var(--mint-dk); } .sc-avg   .sc-n { color:var(--mint-dk); }
+
+/* ── CATEGORY BREAKDOWN ── */
+.cat-breakdown { display:grid; grid-template-columns:repeat(5,1fr); gap:10px; margin-bottom:16px; }
+.cat-card { background:var(--white); border:1px solid var(--border); border-radius:var(--r); padding:16px 18px; box-shadow:var(--sh); text-align:center; }
+.cat-card-icon { font-size:22px; margin-bottom:6px; }
+.cat-card-name { font-size:11px; font-weight:600; color:var(--text2); text-transform:uppercase; letter-spacing:.5px; margin-bottom:6px; }
+.cat-card-n { font-size:26px; font-weight:700; line-height:1; }
+.cat-card-bar { background:var(--border); border-radius:99px; height:4px; margin-top:8px; overflow:hidden; }
+.cat-card-fill { height:100%; border-radius:99px; transition:width .4s; }
+
+/* ── CHART ── */
+.chart { background:var(--white); border:1px solid var(--border); border-radius:var(--r); box-shadow:var(--sh); padding:22px 24px; margin-bottom:14px; }
+.chart-title { font-size:16px; font-weight:700; color:var(--text); margin-bottom:3px; }
+.chart-sub { font-size:12px; color:var(--text3); margin-bottom:20px; }
+.barchart { display:flex; align-items:flex-end; gap:6px; height:140px; }
+.bcol { flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; height:100%; justify-content:flex-end; }
+.bc-label { font-size:10px; color:var(--text3); font-weight:500; }
+.bc-bar { width:100%; border-radius:8px 8px 0 0; min-height:4px; background:linear-gradient(180deg,var(--mint-md) 0%,var(--mint) 100%); position:relative; transition:height .4s ease; cursor:pointer; border:1px solid rgba(201,242,153,.4); }
+.bc-bar.today { background:linear-gradient(180deg,var(--mint-dk) 0%,var(--mint-md) 100%); }
+.bc-bar.empty { background:var(--bg); border:1px solid var(--border); }
+.bc-tip { position:absolute; top:-32px; left:50%; transform:translateX(-50%); background:var(--text); color:#fff; font-size:11px; font-weight:600; padding:3px 8px; border-radius:6px; white-space:nowrap; display:none; z-index:10; }
+.bc-tip::after { content:''; position:absolute; top:100%; left:50%; transform:translateX(-50%); border:4px solid transparent; border-top-color:var(--text); }
+.bcol:hover .bc-tip { display:block; }
+.wc-list { display:flex; flex-direction:column; gap:12px; }
+.wc-row { display:grid; grid-template-columns:100px 1fr 48px; gap:12px; align-items:center; }
+.wc-label { font-size:12px; color:var(--text2); font-weight:500; }
+.wc-bg { background:var(--bg); border-radius:99px; height:10px; overflow:hidden; border:1px solid var(--border); }
+.wc-fill { height:100%; border-radius:99px; transition:width .5s; }
+.wc-pct { font-size:13px; font-weight:700; text-align:right; color:var(--text); }
+.heat-days { display:grid; grid-template-columns:repeat(7,1fr); gap:4px; margin-bottom:5px; }
+.heat-day { text-align:center; font-size:9px; color:var(--text3); font-weight:700; text-transform:uppercase; }
+.heatmap { display:grid; grid-template-columns:repeat(7,1fr); gap:4px; }
+.hcell { aspect-ratio:1; border-radius:5px; cursor:default; transition:transform .1s; border:1px solid rgba(0,0,0,.04); }
+.hcell:hover { transform:scale(1.15); z-index:2; position:relative; }
+.h0 { background:#f0f5ea; } .h1 { background:rgba(201,242,153,.5); } .h2 { background:rgba(168,224,96,.65); } .h3 { background:rgba(120,190,40,.75); } .h4 { background:var(--mint-dk); }
+.heat-legend { display:flex; gap:4px; align-items:center; margin-top:12px; justify-content:flex-end; }
+
+/* ── ARCHIVE ── */
+.arch-list { display:flex; flex-direction:column; gap:8px; }
+.arch-week { background:var(--white); border:1px solid var(--border); border-radius:var(--r-sm); padding:16px 20px; cursor:pointer; transition:all .12s; }
+.arch-week:hover { border-color:var(--mint); background:var(--mint-lt); box-shadow:var(--sh); }
+.arch-hd { display:flex; justify-content:space-between; align-items:center; }
+.arch-ttl { font-size:13px; font-weight:600; }
+.arch-chips { display:flex; gap:8px; margin-top:10px; flex-wrap:wrap; }
+.chip { font-size:11px; padding:3px 10px; border-radius:99px; font-weight:500; }
+.chip-g { background:#dcfce7; color:var(--done-c); } .chip-y { background:#fef3c7; color:var(--doing-c); } .chip-n { background:var(--bg); color:var(--text2); }
+.arch-detail { display:none; margin-top:12px; border-top:1px solid var(--border); padding-top:12px; }
+.arch-detail.open { display:block; }
+.arch-row { display:flex; gap:8px; align-items:center; padding:5px 0; border-bottom:1px solid var(--border); font-size:12px; }
+.arch-row:last-child { border-bottom:none; }
+
+/* ── BANNER ── */
+.banner { background:var(--mint); border:1px solid var(--mint-md); border-radius:var(--r); padding:14px 20px; margin-bottom:14px; display:none; align-items:center; justify-content:space-between; }
+.banner.show { display:flex; }
+.banner p { font-size:13px; font-weight:600; color:var(--mint-dk); }
+.banner small { font-size:11px; color:var(--mint-dk); opacity:.75; }
+
+/* ── TG STATUS ── */
+.tg-status { display:flex; align-items:center; gap:8px; margin-top:6px; font-size:12px; color:var(--text2); }
+.tg-dot { width:8px; height:8px; border-radius:50%; background:var(--text3); }
+.tg-dot.ok { background:var(--done-c); } .tg-dot.err { background:var(--red-c); }
+
+/* ── BOTTOM BAR ── */
+.btmbar { position:fixed; bottom:0; left:0; right:0; background:rgba(255,255,255,.97); backdrop-filter:blur(20px); border-top:2px solid var(--mint); padding:10px 28px; display:flex; justify-content:center; gap:10px; z-index:40; }
+
+/* ── TOAST ── */
+.toast { position:fixed; bottom:72px; left:50%; transform:translateX(-50%) translateY(20px); background:var(--text); color:#fff; padding:10px 20px; border-radius:var(--r-sm); font-size:13px; font-weight:500; opacity:0; transition:all .3s; pointer-events:none; z-index:200; white-space:nowrap; }
+.toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+.toast.success { background:var(--mint-dk); }
+.toast.error { background:var(--red-c); }
+
+/* ── SPINNER ── */
+@keyframes spin { to { transform:rotate(360deg); } }
+.spinner { width:13px; height:13px; border:2px solid rgba(255,255,255,.3); border-top-color:#fff; border-radius:50%; animation:spin .6s linear infinite; }
+
+/* ── AI LOADING ── */
+.ai-loading { display:inline-block; width:12px; height:12px; border:2px solid var(--border); border-top-color:var(--mint-dk); border-radius:50%; animation:spin .5s linear infinite; }
+
+@media(max-width:640px) {
+  .qrow { grid-template-columns:1fr 1fr; }
+  .stat-grid { grid-template-columns:repeat(2,1fr); }
+  .cat-breakdown { grid-template-columns:repeat(3,1fr); }
+  .nav-tab { padding:15px 10px; font-size:12px; }
+  .page { padding:16px 14px 100px; }
+  .today-strip { flex-direction:column; align-items:flex-start; }
+  .wprog { width:100%; max-width:none; }
+}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-logo">
+    <div class="nav-badge">📋</div>
+    Weekly Status Report
+  </div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="showPage('report',this)">Report</button>
+    <button class="nav-tab" onclick="showPage('dashboard',this)">Dashboard</button>
+    <button class="nav-tab" onclick="showPage('archive',this)">Archive</button>
+  </div>
+</nav>
+
+<!-- ═══ REPORT ═══ -->
+<div class="page active" id="page-report">
+
+  <div class="banner" id="newBanner">
+    <div><p>🎉 Tuần mới bắt đầu!</p><small>Tuần trước đã lưu vào Archive.</small></div>
+    <button class="btn btn-sm" style="background:var(--mint-dk);" onclick="dismissBanner()">OK</button>
+  </div>
+
+  <div class="today-strip">
+    <div class="today-left">
+      <div class="today-tag">Hôm nay</div>
+      <div class="today-date" id="focusDate">—</div>
+    </div>
+    <div class="today-stats">
+      <div class="ts"><div class="ts-n c-done" id="fDone">0</div><div class="ts-l">Done</div></div>
+      <div class="ts"><div class="ts-n c-doing" id="fDoing">0</div><div class="ts-l">Doing</div></div>
+      <div class="ts"><div class="ts-n c-todo" id="fTodo">0</div><div class="ts-l">Todo</div></div>
+      <div class="ts"><div class="ts-n c-total" id="fTotal">0</div><div class="ts-l">Today</div></div>
+    </div>
+    <div class="wprog">
+      <div class="wprog-lbl"><span>Weekly progress</span><b id="fWeekPct">0%</b></div>
+      <div class="wprog-bg"><div class="wprog-fill" id="fWeekBar" style="width:0%"></div></div>
+    </div>
+  </div>
+
+  <!-- Quick add -->
+  <div class="card">
+    <div class="card-hd">↳ Thêm công việc nhanh</div>
+    <div class="card-bd">
+      <div class="qrow">
+        <select id="dateSelect"></select>
+        <input id="taskInput" placeholder="Mô tả công việc..." onkeydown="if(event.key==='Enter')addTask()" oninput="previewCategory(this.value)" />
+        <select id="statusSelect">
+          <option value="done">✓ Done</option>
+          <option value="doing">⟳ Doing</option>
+          <option value="todo">— Todo</option>
+        </select>
+        <select id="catSelect">
+          <option value="auto">✨ Auto-detect</option>
+          <option value="work">💼 Work</option>
+          <option value="learn">🎓 Learn</option>
+          <option value="body">💪 Body</option>
+          <option value="grow">🌱 Grow</option>
+          <option value="life">🎯 Life</option>
+        </select>
+      </div>
+      <div class="arow">
+        <input type="number" id="progressInput" placeholder="Progress %" min="0" max="100" style="width:120px;" />
+        <button class="btn" onclick="addTask()">+ Thêm</button>
+        <button class="btn btn-ghost" onclick="clearInputs()">Xóa</button>
+      </div>
+      <div class="ai-tag-wrap">
+        <span class="ai-tag-hint" id="aiTagHint"></span>
+        <span id="aiTagPreview"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filter bar -->
+  <div class="cat-filter" id="catFilter">
+    <button class="cat-btn active" onclick="filterCat('all',this)">Tất cả</button>
+    <button class="cat-btn" onclick="filterCat('work',this)">💼 Work</button>
+    <button class="cat-btn" onclick="filterCat('learn',this)">🎓 Learn</button>
+    <button class="cat-btn" onclick="filterCat('body',this)">💪 Body</button>
+    <button class="cat-btn" onclick="filterCat('grow',this)">🌱 Grow</button>
+    <button class="cat-btn" onclick="filterCat('life',this)">🎯 Life</button>
+  </div>
+
+  <div class="slabel">01 — Work of this week &nbsp;<span id="weekLabel" style="font-weight:400;color:var(--text3);text-transform:none;letter-spacing:0;font-size:11px;"></span></div>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>Date</th><th>Task</th><th>Category</th><th>Status</th><th>Progress</th><th>Notes</th><th>Link</th><th></th></tr></thead>
+      <tbody id="weekTable"></tbody>
+    </table>
+  </div>
+
+  <!-- Snapshot -->
+  <div class="slabel" style="margin-top:28px;">02 — This week snapshot</div>
+  <div class="stat-grid">
+    <div class="stat-card sc-total highlight"><div class="sc-lbl">Total tasks</div><div class="sc-n" id="rTotal">0</div></div>
+    <div class="stat-card sc-done"><div class="sc-lbl">Completed</div><div class="sc-n" id="rDone">0</div></div>
+    <div class="stat-card sc-doing"><div class="sc-lbl">In progress</div><div class="sc-n" id="rDoing">0</div></div>
+    <div class="stat-card sc-avg"><div class="sc-lbl">Avg progress</div><div class="sc-n" id="rAvg">0%</div></div>
+  </div>
+
+  <div class="divider"></div>
+  <div class="slabel">03 — Summary</div>
+  <textarea id="summaryInput" placeholder="Highlights, things to improve, notes..."></textarea>
+
+  <div class="divider"></div>
+  <div class="slabel">04 — To-dos (next week)</div>
+  <div class="todo-list" id="todoList"></div>
+  <div class="todo-add" style="margin-top:8px;">
+    <input id="todoInput" placeholder="Thêm task tuần tới..." onkeydown="if(event.key==='Enter')addTodo()" />
+    <button class="btn" onclick="addTodo()">+</button>
+  </div>
+
+  <div class="divider"></div>
+  <div class="slabel">05 — Telegram</div>
+  <div class="arow" style="margin-bottom:4px;">
+    <input type="password" id="tokenInput" placeholder="Paste bot token từ @BotFather..." />
+    <button class="btn" onclick="saveToken()">Lưu</button>
+    <button class="btn btn-ghost btn-sm" onclick="testToken()" id="testBtn">Test</button>
+  </div>
+  <div class="tg-status" id="tgStatus">
+    <div class="tg-dot" id="tgDot"></div>
+    <span id="tgStatusTxt">Token lưu trong trình duyệt.</span>
+  </div>
+  <button class="btn-mint" onclick="sendTg()" id="tgBtn" style="margin-top:12px;"><span id="tgTxt">📨 Gửi report lên Telegram</span></button>
+</div>
+
+<!-- ═══ DASHBOARD ═══ -->
+<div class="page" id="page-dashboard">
+
+  <div class="stat-grid">
+    <div class="stat-card sc-total highlight"><div class="sc-lbl">Total tasks</div><div class="sc-n" id="dTotal">0</div></div>
+    <div class="stat-card sc-done"><div class="sc-lbl">Completed</div><div class="sc-n" id="dDone">0</div></div>
+    <div class="stat-card sc-doing"><div class="sc-lbl">In progress</div><div class="sc-n" id="dDoing">0</div></div>
+    <div class="stat-card sc-avg"><div class="sc-lbl">Avg progress</div><div class="sc-n" id="dAvg">0%</div></div>
+  </div>
+
+  <!-- Category breakdown -->
+  <div class="slabel">Category breakdown</div>
+  <div class="cat-breakdown" id="catBreakdown"></div>
+
+  <div class="chart">
+    <div class="chart-title">Tasks by day</div>
+    <div class="chart-sub" id="chartSub">—</div>
+    <div class="barchart" id="barChart"></div>
+  </div>
+
+  <div class="chart">
+    <div class="chart-title">Week comparison</div>
+    <div class="chart-sub">Average progress % per week</div>
+    <div class="wc-list" id="wcList"></div>
+  </div>
+
+  <div class="chart">
+    <div class="chart-title">Monthly activity</div>
+    <div class="chart-sub">Tasks completed per day</div>
+    <div class="heat-days" id="heatDays"></div>
+    <div class="heatmap" id="heatmap"></div>
+    <div class="heat-legend">
+      <span style="font-size:10px;color:var(--text3)">Less</span>
+      <div class="hcell h0" style="width:11px;height:11px;aspect-ratio:unset;"></div>
+      <div class="hcell h1" style="width:11px;height:11px;aspect-ratio:unset;"></div>
+      <div class="hcell h2" style="width:11px;height:11px;aspect-ratio:unset;"></div>
+      <div class="hcell h3" style="width:11px;height:11px;aspect-ratio:unset;"></div>
+      <div class="hcell h4" style="width:11px;height:11px;aspect-ratio:unset;"></div>
+      <span style="font-size:10px;color:var(--text3)">More</span>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ ARCHIVE ═══ -->
+<div class="page" id="page-archive">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;">
+    <div>
+      <div style="font-size:18px;font-weight:700;">Archived Weeks</div>
+      <div style="font-size:12px;color:var(--text3);margin-top:2px;">Tự động lưu khi sang tuần mới</div>
+    </div>
+    <button class="btn btn-ghost btn-sm btn-red" onclick="clearArchive()">Xóa tất cả</button>
+  </div>
+  <div class="arch-list" id="archList"></div>
+</div>
+
+<div class="btmbar">
+  <button class="btn btn-ghost" onclick="clearAll()">🗑 Reset tuần</button>
+  <button class="btn" onclick="sendTg()">📨 Gửi Telegram</button>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ══ CATEGORIES ═══════════════════════════
+const CATS = {
+  work:  { icon:'💼', label:'Work',  color:'#2563eb', bg:'rgba(59,130,246,.1)',  fill:'#3b82f6' },
+  learn: { icon:'🎓', label:'Learn', color:'#7c3aed', bg:'rgba(139,92,246,.1)', fill:'#8b5cf6' },
+  body:  { icon:'💪', label:'Body',  color:'#dc2626', bg:'rgba(239,68,68,.1)',  fill:'#ef4444' },
+  grow:  { icon:'🌱', label:'Grow',  color:'#059669', bg:'rgba(16,185,129,.1)', fill:'#10b981' },
+  life:  { icon:'🎯', label:'Life',  color:'#d97706', bg:'rgba(245,158,11,.1)', fill:'#f59e0b' },
+};
+
+// Keyword-based auto-classify (fast, no API needed)
+const CAT_KEYWORDS = {
+  work:  ['project','dự án','report','báo cáo','presentation','thuyết trình','meeting','họp','cv','portfolio','internship','marketing','client','khách hàng','kam','email','deadline','proposal','strategy','chiến lược','research nghiên','case study','brand','campaign','content','social media','ecommerce','sản phẩm','product'],
+  learn: ['học','study','toeic','ielts','english','tiếng anh','đọc sách','sách','book','podcast','khóa học','course','certificate','chứng chỉ','flashcard','grammar','vocab','luyện','practice','bài tập','homework','bài','assignment','lecture','seminar','workshop','class','lớp'],
+  body:  ['yoga','gym','tập','workout','chạy','run','exercise','thể dục','ăn','eat','sleep','ngủ','nghỉ','rest','uống nước','water','stretch','meditation','thiền','walk','đi bộ','sport','thể thao'],
+  grow:  ['journal','nhật ký','reflect','tự nhìn lại','mindset','habit','thói quen','goal','mục tiêu','plan','kế hoạch','review bản thân','self','cải thiện','improve','phát triển bản thân','personal','vision','tư duy','read','đọc','think','suy nghĩ'],
+  life:  ['bill','hóa đơn','bank','ngân hàng','shopping','mua','clean','dọn','errands','admin','family','gia đình','friend','bạn bè','event','sự kiện','travel','du lịch','appointment','lịch hẹn','health','khám','doctor','bác sĩ','finance','tài chính'],
+};
+
+function autoClassify(text) {
+  const t = text.toLowerCase();
+  let best = null, bestScore = 0;
+  for (const [cat, keywords] of Object.entries(CAT_KEYWORDS)) {
+    const score = keywords.filter(k => t.includes(k)).length;
+    if (score > bestScore) { bestScore = score; best = cat; }
+  }
+  return best || 'life';
+}
+
+function catPill(cat) {
+  const c = CATS[cat] || CATS.life;
+  return `<span class="cat-pill cat-${cat}" style="background:${c.bg};color:${c.color}">${c.icon} ${c.label}</span>`;
+}
+
+let currentFilter = 'all';
+
+function previewCategory(val) {
+  if (!val.trim()) {
+    document.getElementById('aiTagHint').textContent = '';
+    document.getElementById('aiTagPreview').innerHTML = '';
+    return;
+  }
+  const selVal = document.getElementById('catSelect').value;
+  if (selVal !== 'auto') {
+    document.getElementById('aiTagHint').textContent = '';
+    document.getElementById('aiTagPreview').innerHTML = catPill(selVal);
+    return;
+  }
+  const cat = autoClassify(val);
+  const c = CATS[cat];
+  document.getElementById('aiTagHint').textContent = '✨ AI gợi ý:';
+  document.getElementById('aiTagPreview').innerHTML = catPill(cat);
+}
+
+function filterCat(cat, el) {
+  currentFilter = cat;
+  document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  renderTable();
+}
+
+// ══ STORAGE ══════════════════════════════
+const S_KEY = 'wsr_state';
+const A_KEY = 'wsr_archive';
+const T_KEY = 'wsr_token';
+const B_KEY = 'wsr_banner';
+const CHAT_ID = '5144687558';
+
+const getToken   = () => localStorage.getItem(T_KEY)||'';
+const getRaw     = () => { try{ return JSON.parse(localStorage.getItem(S_KEY)); }catch(e){ return null; } };
+const getArchive = () => { try{ return JSON.parse(localStorage.getItem(A_KEY))||[]; }catch(e){ return []; } };
+const persist    = s => localStorage.setItem(S_KEY, JSON.stringify(s));
+const persistArch= a => localStorage.setItem(A_KEY, JSON.stringify(a));
+
+function migrateOld() {
+  if (localStorage.getItem(S_KEY)) return;
+  const oldKeys = ['nhi_weekly_report_v2','nhi_report_v2','nhi_r_v3','nhi_r_v4','nhi_r_v5'];
+  for (const k of oldKeys) {
+    const raw = localStorage.getItem(k);
+    if (raw) {
+      try {
+        const o = JSON.parse(raw);
+        if (o && (o.tasks||o.summary)) {
+          // Add category to existing tasks
+          const tasks = {};
+          for (const [date, tlist] of Object.entries(o.tasks||{})) {
+            tasks[date] = tlist.map(t => ({...t, cat: t.cat || autoClassify(t.task)}));
+          }
+          persist({ tasks, summary:o.summary||'', todos:o.todos||[], weekKey:wKey(WD) });
+          const ak = k.replace('nhi_r_','nhi_arch_');
+          const ar = localStorage.getItem(ak);
+          if (ar) persistArch(JSON.parse(ar));
+          toast('✓ Đã khôi phục dữ liệu cũ','success');
+          return;
+        }
+      } catch(e) {}
+    }
+  }
+}
+
+// ══ DATE ═════════════════════════════════
+function getWeekDates() {
+  const t=new Date(), day=t.getDay();
+  const mon=new Date(t); mon.setDate(t.getDate()-(day===0?6:day-1)); mon.setHours(0,0,0,0);
+  return Array.from({length:7},(_,i)=>{ const d=new Date(mon); d.setDate(mon.getDate()+i); return d; });
+}
+const fmt  = d => `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}`;
+const fmtY = d => `${fmt(d)}/${d.getFullYear()}`;
+const dname= d => ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d.getDay()];
+const wKey = ds=> `${fmtY(ds[0])}_${fmtY(ds[6])}`;
+const wLbl = ds=> `${fmt(ds[0])} – ${fmt(ds[6])}`;
+const esc  = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+const WD = getWeekDates();
+let ST = { tasks:{}, summary:'', todos:[], weekKey:wKey(WD) };
+
+// ══ LOAD ═════════════════════════════════
+function loadState() {
+  const raw = getRaw();
+  if (!raw) return;
+  const ck = wKey(WD);
+  if (raw.weekKey && raw.weekKey !== ck) {
+    archiveWeek(raw);
+    localStorage.setItem(B_KEY,'1');
+    ST.weekKey = ck;
+    persist(ST);
+  } else {
+    ST = { ...ST, ...raw, weekKey:ck };
+  }
+}
+
+function archiveWeek(s) {
+  if (!s || !Object.keys(s.tasks||{}).length) return;
+  const arch = getArchive();
+  if (arch.find(a=>a.weekKey===s.weekKey)) return;
+  arch.unshift({ ...s, archivedAt:new Date().toISOString() });
+  persistArch(arch);
+}
+
+// ══ INIT ═════════════════════════════════
+function init() {
+  migrateOld(); loadState();
+  document.getElementById('weekLabel').textContent = wLbl(WD);
+  document.getElementById('chartSub').textContent  = wLbl(WD);
+  const sel = document.getElementById('dateSelect');
+  WD.forEach(d => { const o=document.createElement('option'); o.value=fmt(d); o.textContent=`${fmt(d)} ${dname(d)}`; sel.appendChild(o); });
+  const tf=fmt(new Date()), fo=[...sel.options].find(o=>o.value===tf);
+  if (fo) sel.value=tf;
+  const sumEl=document.getElementById('summaryInput');
+  sumEl.value=ST.summary||'';
+  sumEl.addEventListener('input',e=>{ ST.summary=e.target.value; persist(ST); });
+  document.getElementById('focusDate').textContent = new Date().toLocaleDateString('vi-VN',{weekday:'long',day:'2-digit',month:'2-digit'});
+  if (getToken()) { document.getElementById('tokenInput').placeholder='✓ Token đã lưu'; document.getElementById('tgDot').classList.add('ok'); document.getElementById('tgStatusTxt').textContent='Token đã lưu. Bấm Test để kiểm tra.'; }
+  if (localStorage.getItem(B_KEY)) document.getElementById('newBanner').classList.add('show');
+  ['M','T','W','T','F','S','S'].forEach(l=>{ const d=document.createElement('div'); d.className='heat-day'; d.textContent=l; document.getElementById('heatDays').appendChild(d); });
+  renderAll();
+}
+
+function renderAll() { renderTable(); renderTodos(); renderFocus(); renderSnap(); }
+
+// ══ FOCUS ════════════════════════════════
+function renderFocus() {
+  const ts=fmt(new Date()), td=ST.tasks[ts]||[];
+  document.getElementById('fDone').textContent  = td.filter(t=>t.status==='done').length;
+  document.getElementById('fDoing').textContent = td.filter(t=>t.status==='doing').length;
+  document.getElementById('fTodo').textContent  = td.filter(t=>t.status==='todo').length;
+  document.getElementById('fTotal').textContent = td.length;
+  const all=WD.flatMap(d=>ST.tasks[fmt(d)]||[]);
+  const avg=all.length?Math.round(all.reduce((s,t)=>s+(t.progress||0),0)/all.length):0;
+  document.getElementById('fWeekPct').textContent=avg+'%';
+  document.getElementById('fWeekBar').style.width=avg+'%';
+}
+
+function renderSnap() {
+  const all=WD.flatMap(d=>ST.tasks[fmt(d)]||[]);
+  const avg=all.length?Math.round(all.reduce((s,t)=>s+(t.progress||0),0)/all.length):0;
+  document.getElementById('rTotal').textContent=all.length;
+  document.getElementById('rDone').textContent=all.filter(t=>t.status==='done').length;
+  document.getElementById('rDoing').textContent=all.filter(t=>t.status==='doing').length;
+  document.getElementById('rAvg').textContent=avg+'%';
+}
+
+// ══ TABLE ════════════════════════════════
+function renderTable() {
+  const tbody=document.getElementById('weekTable'); tbody.innerHTML='';
+  WD.forEach(d=>{
+    const ds=fmt(d);
+    let tasks=ST.tasks[ds]||[];
+    if (currentFilter!=='all') tasks=tasks.filter(t=>(t.cat||'life')===currentFilter);
+    const allTasks=ST.tasks[ds]||[];
+    if (!allTasks.length) {
+      if (currentFilter!=='all') return;
+      const tr=document.createElement('tr');
+      tr.innerHTML=`<td>${ds}<br><span style="font-size:10px;color:var(--text3)">${dname(d)}</span></td><td class="tcell tempty" colspan="4">—</td><td></td>`;
+      tbody.appendChild(tr);
+    } else {
+      tasks.forEach((t,i)=>{
+        const origIdx=allTasks.indexOf(t);
+        const p=t.progress||0, cat=t.cat||autoClassify(t.task);
+        const tr=document.createElement('tr');
+        const linkVal = t.link||'';
+        const linkDisplay = linkVal ? `<a class="link-open" href="${esc(linkVal)}" target="_blank" title="${esc(linkVal)}">🔗</a>` : '';
+        tr.innerHTML=`
+          <td>${i===0||currentFilter!=='all'?`${ds}<br><span style="font-size:10px;color:var(--text3)">${dname(d)}</span>`:''}</td>
+          <td class="tcell"><textarea class="task-edit" rows="1" onblur="saveTaskText('${ds}',${origIdx},this.value)" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();this.blur();}">${esc(t.task)}</textarea></td>
+          <td>${catPill(cat)}</td>
+          <td><span class="badge b-${t.status}" onclick="cycleStatus('${ds}',${origIdx})" title="Click để đổi">${t.status}</span></td>
+          <td><div class="prog"><div class="prog-bar"><div class="prog-fill" style="width:${p}%"></div></div><input type="number" class="prog-input" min="0" max="100" value="${p}" onchange="saveProgress('${ds}',${origIdx},this.value)" /></div></td>
+          <td><input class="notes-input" value="${esc(t.notes||'')}" onblur="saveNotes('${ds}',${origIdx},this.value)" onkeydown="if(event.key==='Enter')this.blur()" /></td>
+          <td style="min-width:100px;"><div style="display:flex;align-items:center;"><input class="link-input" value="${esc(linkVal)}" onblur="saveLink('${ds}',${origIdx},this.value)" onkeydown="if(event.key==='Enter')this.blur()" />${linkDisplay}</div></td>
+          <td><button class="btn-del" onclick="delTask('${ds}',${origIdx})">✕</button></td>`;
+        tbody.appendChild(tr);
+      });
+    }
+  });
+}
+
+// ══ TASK CRUD ════════════════════════════
+function saveTaskText(date,idx,val) {
+  val=val.trim(); if(!val) return;
+  ST.tasks[date][idx].task=val;
+  ST.tasks[date][idx].cat=autoClassify(val);
+  persist(ST); renderFocus(); renderSnap();
+}
+
+function cycleStatus(date,idx) {
+  const order=['done','doing','todo'], cur=ST.tasks[date][idx].status;
+  const next=order[(order.indexOf(cur)+1)%3];
+  ST.tasks[date][idx].status=next;
+  if(next==='done') ST.tasks[date][idx].progress=100;
+  if(next==='todo') ST.tasks[date][idx].progress=0;
+  persist(ST); renderAll();
+}
+
+function saveProgress(date,idx,val) {
+  const p=Math.min(100,Math.max(0,parseInt(val)||0));
+  ST.tasks[date][idx].progress=p;
+  persist(ST); renderFocus(); renderSnap(); renderTable();
+}
+
+function saveNotes(date,idx,val) {
+  ST.tasks[date][idx].notes = val.trim();
+  persist(ST);
+}
+
+function saveLink(date,idx,val) {
+  val = val.trim();
+  if (val && !val.startsWith('http')) val = 'https://' + val;
+  ST.tasks[date][idx].link = val;
+  persist(ST); renderTable();
+}
+
+function addTask() {
+  const date=document.getElementById('dateSelect').value;
+  const task=document.getElementById('taskInput').value.trim();
+  const status=document.getElementById('statusSelect').value;
+  const catSel=document.getElementById('catSelect').value;
+  const cat=catSel==='auto'?autoClassify(task):catSel;
+  const progress=parseInt(document.getElementById('progressInput').value)||(status==='done'?100:status==='doing'?50:0);
+  if (!task) { toast('Nhập mô tả nhé!','error'); return; }
+  if (!ST.tasks[date]) ST.tasks[date]=[];
+  ST.tasks[date].push({task,status,progress,cat});
+  persist(ST); clearInputs(); renderAll(); toast(`Đã thêm → ${CATS[cat].icon} ${CATS[cat].label}`,'success');
+}
+
+function delTask(date,idx) {
+  ST.tasks[date].splice(idx,1);
+  if(!ST.tasks[date].length) delete ST.tasks[date];
+  persist(ST); renderAll();
+}
+
+function clearInputs() {
+  document.getElementById('taskInput').value='';
+  document.getElementById('progressInput').value='';
+  document.getElementById('statusSelect').value='done';
+  document.getElementById('catSelect').value='auto';
+  document.getElementById('aiTagHint').textContent='';
+  document.getElementById('aiTagPreview').innerHTML='';
+}
+
+// ══ TODOS ════════════════════════════════
+function renderTodos() {
+  const list=document.getElementById('todoList'); list.innerHTML='';
+  (ST.todos||[]).forEach((t,i)=>{
+    const d=document.createElement('div'); d.className='todo-item';
+    d.innerHTML=`<div class="todo-chk ${t.done?'on':''}" onclick="toggleTodo(${i})">${t.done?'✓':''}</div><div class="todo-txt ${t.done?'done':''}">${esc(t.text)}</div><button class="btn-del" style="opacity:1" onclick="delTodo(${i})">✕</button>`;
+    list.appendChild(d);
+  });
+}
+function addTodo() { const text=document.getElementById('todoInput').value.trim(); if(!text) return; if(!ST.todos) ST.todos=[]; ST.todos.push({text,done:false}); document.getElementById('todoInput').value=''; persist(ST); renderTodos(); }
+function toggleTodo(i) { ST.todos[i].done=!ST.todos[i].done; persist(ST); renderTodos(); }
+function delTodo(i)    { ST.todos.splice(i,1); persist(ST); renderTodos(); }
+
+// ══ DASHBOARD ════════════════════════════
+function renderDashboard() {
+  const all=WD.flatMap(d=>ST.tasks[fmt(d)]||[]);
+  const avg=all.length?Math.round(all.reduce((s,t)=>s+(t.progress||0),0)/all.length):0;
+  document.getElementById('dTotal').textContent=all.length;
+  document.getElementById('dDone').textContent=all.filter(t=>t.status==='done').length;
+  document.getElementById('dDoing').textContent=all.filter(t=>t.status==='doing').length;
+  document.getElementById('dAvg').textContent=avg+'%';
+  renderCatBreakdown(all); renderBarChart(); renderWeekCompare(); renderHeatmap();
+}
+
+function renderCatBreakdown(all) {
+  const wrap=document.getElementById('catBreakdown'); wrap.innerHTML='';
+  const max=Math.max(1,...Object.keys(CATS).map(c=>all.filter(t=>(t.cat||'life')===c).length));
+  for (const [key,c] of Object.entries(CATS)) {
+    const tasks=all.filter(t=>(t.cat||'life')===key);
+    const done=tasks.filter(t=>t.status==='done').length;
+    const pct=tasks.length?Math.round((tasks.length/max)*100):0;
+    const card=document.createElement('div'); card.className='cat-card';
+    card.innerHTML=`
+      <div class="cat-card-icon">${c.icon}</div>
+      <div class="cat-card-name">${c.label}</div>
+      <div class="cat-card-n" style="color:${c.color}">${tasks.length}</div>
+      <div style="font-size:11px;color:var(--text3);margin-top:2px;">${done} done</div>
+      <div class="cat-card-bar"><div class="cat-card-fill" style="width:${pct}%;background:${c.fill}"></div></div>`;
+    wrap.appendChild(card);
+  }
+}
+
+function renderBarChart() {
+  const wrap=document.getElementById('barChart'); wrap.innerHTML='';
+  const today=fmt(new Date()), counts=WD.map(d=>(ST.tasks[fmt(d)]||[]).length), max=Math.max(1,...counts);
+  WD.forEach((d,i)=>{
+    const ds=fmt(d),total=counts[i],isToday=ds===today,h=total?Math.max(16,Math.round((total/max)*128)):6;
+    const col=document.createElement('div'); col.className='bcol';
+    col.innerHTML=`<div style="width:100%;height:${h}px;position:relative;"><div class="bc-bar${isToday?' today':!total?' empty':''}" style="height:100%;width:100%;"><div class="bc-tip">${total} task${total!==1?'s':''}</div></div></div><div class="bc-label">${fmt(d).slice(0,2)}/${fmt(d).slice(3,5)}</div>`;
+    wrap.appendChild(col);
+  });
+}
+
+function renderWeekCompare() {
+  const wrap=document.getElementById('wcList'); wrap.innerHTML='';
+  const currAll=WD.flatMap(d=>ST.tasks[fmt(d)]||[]);
+  const currAvg=currAll.length?Math.round(currAll.reduce((s,t)=>s+(t.progress||0),0)/currAll.length):0;
+  const weeks=[{label:'Tuần này',avg:currAvg,curr:true},...getArchive().slice(0,4).map(a=>{ const tasks=Object.values(a.tasks||{}).flat(); const avg=tasks.length?Math.round(tasks.reduce((s,t)=>s+(t.progress||0),0)/tasks.length):0; const parts=(a.weekKey||'').split('_'); return {label:parts.length===2?parts[0].slice(0,5)+' – '+parts[1].slice(0,5):'Tuần cũ',avg}; })];
+  weeks.forEach(w=>{ const row=document.createElement('div'); row.className='wc-row'; row.innerHTML=`<div class="wc-label" style="${w.curr?'font-weight:700;color:var(--text)':''}">${w.label}</div><div class="wc-bg"><div class="wc-fill" style="width:${w.avg}%;background:${w.curr?'var(--mint-dk)':'var(--mint-md)'}"></div></div><div class="wc-pct">${w.avg}%</div>`; wrap.appendChild(row); });
+  if(weeks.length===1) wrap.innerHTML+=`<div style="color:var(--text3);font-size:12px;text-align:center;padding:12px;">Archive thêm tuần để so sánh.</div>`;
+}
+
+function renderHeatmap() {
+  const wrap=document.getElementById('heatmap'); wrap.innerHTML='';
+  const now=new Date(),yr=now.getFullYear(),mo=now.getMonth(),first=new Date(yr,mo,1),days=new Date(yr,mo+1,0).getDate();
+  let off=first.getDay(); off=off===0?6:off-1;
+  const doneMap={};
+  WD.forEach(d=>{ const k=`${yr}-${mo}-${d.getDate()}`; doneMap[k]=(doneMap[k]||0)+(ST.tasks[fmt(d)]||[]).filter(t=>t.status==='done').length; });
+  getArchive().forEach(a=>{ Object.entries(a.tasks||{}).forEach(([ds,tasks])=>{ const p=ds.split('/'); if(p.length!==2) return; const wk=(a.weekKey||'').split('_'); const y=wk[0]?parseInt(wk[0].split('/')[2]):yr; const m=parseInt(p[1])-1,day=parseInt(p[0]); if(y===yr&&m===mo){const k=`${y}-${m}-${day}`;doneMap[k]=(doneMap[k]||0)+tasks.filter(t=>t.status==='done').length;} }); });
+  for(let i=0;i<off;i++){const c=document.createElement('div');c.className='hcell h0';c.style.opacity='0';wrap.appendChild(c);}
+  for(let d=1;d<=days;d++){const k=`${yr}-${mo}-${d}`,cnt=doneMap[k]||0,lv=cnt===0?0:cnt===1?1:cnt<=3?2:cnt<=5?3:4,c=document.createElement('div');c.className=`hcell h${lv}`;c.title=`${d}/${mo+1}: ${cnt} done`;if(d===now.getDate()&&mo===now.getMonth()){c.style.outline='2px solid var(--mint-dk)';c.style.outlineOffset='1px';}wrap.appendChild(c);}
+}
+
+// ══ ARCHIVE ══════════════════════════════
+function renderArchive() {
+  const list=document.getElementById('archList'),arch=getArchive();
+  if(!arch.length){list.innerHTML=`<div style="color:var(--text3);font-size:13px;text-align:center;padding:56px 20px;">Chưa có tuần nào.<br><small style="margin-top:4px;display:block;">App tự lưu khi sang tuần mới.</small></div>`;return;}
+  list.innerHTML='';
+  arch.forEach((a,ai)=>{
+    const tasks=Object.values(a.tasks||{}).flat(),done=tasks.filter(t=>t.status==='done').length,doing=tasks.filter(t=>t.status==='doing').length,avg=tasks.length?Math.round(tasks.reduce((s,t)=>s+(t.progress||0),0)/tasks.length):0;
+    const parts=(a.weekKey||'').split('_'),lbl=parts.length===2?parts[0].slice(0,5)+' – '+parts[1].slice(0,5):'Tuần cũ';
+    const div=document.createElement('div');div.className='arch-week';
+    div.innerHTML=`<div class="arch-hd" onclick="toggleArch(${ai})"><div class="arch-ttl">📅 ${lbl}</div><span style="color:var(--text3);font-size:12px;">▼</span></div><div class="arch-chips"><span class="chip chip-g">✓ ${done} done</span>${doing?`<span class="chip chip-y">⟳ ${doing} doing</span>`:''}<span class="chip chip-n">avg ${avg}%</span><span class="chip chip-n">${tasks.length} tasks</span></div><div class="arch-detail" id="ach-${ai}">${archDetail(a)}</div>`;
+    list.appendChild(div);
+  });
+}
+
+function archDetail(a) {
+  let html='';
+  Object.entries(a.tasks||{}).forEach(([date,tasks])=>{ tasks.forEach(t=>{ 
+    const linkHtml = t.link ? `<a href="${esc(t.link)}" target="_blank" style="color:#2563eb;font-size:11px;margin-left:4px;">🔗</a>` : '';
+    const notesHtml = t.notes ? `<span style="color:var(--text3);font-size:11px;font-style:italic;"> — ${esc(t.notes)}</span>` : '';
+    html+=`<div class="arch-row"><span style="color:var(--text3);width:38px;flex-shrink:0;">${date}</span>${catPill(t.cat||'life')}<span style="flex:1;margin-left:6px;">${esc(t.task)}${notesHtml}${linkHtml}</span><span class="badge b-${t.status}">${t.status}</span><span style="color:var(--text2);font-size:11px;width:32px;text-align:right;">${t.progress||0}%</span></div>`;
+  }); });
+  if(a.summary) html+=`<div style="margin-top:8px;font-size:12px;color:var(--text2);padding:10px;background:var(--bg);border-radius:8px;">${esc(a.summary)}</div>`;
+  return html||'<div style="font-size:12px;color:var(--text3);">Không có task.</div>';
+}
+
+function toggleArch(i){document.getElementById(`ach-${i}`).classList.toggle('open');}
+function clearArchive(){if(!confirm('Xóa toàn bộ archive?')) return; persistArch([]); renderArchive(); toast('Đã xóa archive','success');}
+
+// ══ RESET ════════════════════════════════
+function clearAll() {
+  if(!confirm('Reset tuần này? Dữ liệu sẽ được lưu vào Archive.')) return;
+  archiveWeek(ST); ST={tasks:{},summary:'',todos:[],weekKey:wKey(WD)};
+  document.getElementById('summaryInput').value=''; persist(ST); renderAll(); toast('Đã reset ✓','success');
+}
+function dismissBanner(){localStorage.removeItem(B_KEY);document.getElementById('newBanner').classList.remove('show');}
+
+// ══ TELEGRAM ═════════════════════════════
+function saveToken() {
+  const v=document.getElementById('tokenInput').value.trim(); if(!v){toast('Nhập token trước!','error');return;}
+  localStorage.setItem(T_KEY,v); document.getElementById('tokenInput').value=''; document.getElementById('tokenInput').placeholder='✓ Token đã lưu';
+  document.getElementById('tgDot').className='tg-dot ok'; document.getElementById('tgStatusTxt').textContent='Token đã lưu.'; toast('Đã lưu token ✓','success');
+}
+
+async function testToken() {
+  const tok=getToken(); if(!tok){toast('Chưa có token!','error');return;}
+  const btn=document.getElementById('testBtn'); btn.textContent='...'; btn.disabled=true;
+  try {
+    const r=await fetch(`https://api.telegram.org/bot${tok}/getMe`), d=await r.json();
+    if(d.ok){document.getElementById('tgDot').className='tg-dot ok';document.getElementById('tgStatusTxt').textContent=`✓ Bot: @${d.result.username}`;toast(`✓ @${d.result.username} hoạt động!`,'success');}
+    else{document.getElementById('tgDot').className='tg-dot err';document.getElementById('tgStatusTxt').textContent='Token lỗi — lấy token mới từ @BotFather';toast('Token không hợp lệ','error');}
+  } catch(e){toast('Không kết nối được','error');}
+  btn.textContent='Test'; btn.disabled=false;
+}
+
+function buildMsg() {
+  const all=WD.flatMap(d=>ST.tasks[fmt(d)]||[]),done=all.filter(t=>t.status==='done').length,avg=all.length?Math.round(all.reduce((s,t)=>s+(t.progress||0),0)/all.length):0;
+  let m=`📋 *Weekly Status Report*\n👤 Jolie Nhi · JBI\n📅 ${wLbl(WD)}\n${'─'.repeat(28)}\n\n`;
+  // Group by category
+  for (const [key,c] of Object.entries(CATS)) {
+    const catTasks=all.filter(t=>(t.cat||'life')===key);
+    if(!catTasks.length) continue;
+    m+=`${c.icon} *${c.label}*\n`;
+    catTasks.forEach(t=>{ m+=`  ${t.status==='done'?'✅':t.status==='doing'?'🔄':'⬜'} ${t.task} _(${t.progress||0}%)_\n`; });
+    m+='\n';
+  }
+  m+=`${'─'.repeat(28)}\n📊 Done: ${done}/${all.length} · Avg: ${avg}%\n`;
+  if(ST.summary) m+=`\n📝 ${ST.summary}\n`;
+  if(ST.todos?.length){m+=`\n${'─'.repeat(28)}\n*To-dos*\n`;ST.todos.forEach(t=>{m+=`${t.done?'✅':'☐'} ${t.text}\n`;});}
+  return m;
+}
+
+async function sendTg() {
+  const tok=getToken(); if(!tok){toast('Chưa có token!','error');return;}
+  const btn=document.getElementById('tgBtn'),txt=document.getElementById('tgTxt');
+  txt.innerHTML='<span class="spinner"></span> Đang gửi...'; btn.disabled=true;
+  try {
+    const r=await fetch(`https://api.telegram.org/bot${tok}/sendMessage`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({chat_id:CHAT_ID,text:buildMsg(),parse_mode:'Markdown'})});
+    const d=await r.json(); d.ok?toast('✓ Đã gửi Telegram!','success'):toast('Lỗi: '+d.description,'error');
+  } catch(e){toast('Network error','error');}
+  txt.textContent='📨 Gửi report lên Telegram'; btn.disabled=false;
+}
+
+// ══ NAV ══════════════════════════════════
+function showPage(id,el) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active'); el.classList.add('active');
+  if(id==='dashboard') renderDashboard();
+  if(id==='archive')   renderArchive();
+}
+
+function toast(msg,type='') { const t=document.getElementById('toast'); t.textContent=msg; t.className=`toast ${type} show`; setTimeout(()=>t.className='toast',3000); }
+
+init();
+</script>
+</body>
+</html>
